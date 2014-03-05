@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">biosense2</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="idle_message">idle_message</string>
+    <string name="btnotsupported_message">btnotsupported_message</string>
+    <string name="requestcanceled_message">requestcanceled_message</string>
+    <string name="bton_message">bton_message</string>
+    <string name="btoff_message">btoff_message</string>
+    <string name="title_activity_monitor">Monitor</string>
+
+</resources>
