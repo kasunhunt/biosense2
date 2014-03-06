@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 
+
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -44,10 +45,42 @@ public class MainActivity extends ListActivity {
 	protected static final int MESSAGE_READ  = 1;
 	protected static final int SUCCESS_CONNECT = 0;
 
-    Handler mHandler;
+    //Handler mHandler;
 	ArrayList<String> pairedDevices2;
 	ArrayList<BluetoothDevice> devices;
+	ConnectThread connect;
     //!
+	
+	
+	
+	Handler mHandler = new Handler(){
+		
+    	@Override
+    	public void handleMessage(Message msg) {
+
+    		super.handleMessage(msg);
+    		switch(msg.what){
+    		case SUCCESS_CONNECT:
+    			//Do something
+    			ConnectedThread connectedThread = new ConnectedThread((BluetoothSocket)msg.obj);
+    			Toast.makeText(getApplicationContext(), "CONNECTED", 0).show();
+    			String s = "SND"; //request monitoring
+    			connectedThread.write(s.getBytes());
+    			Log.i("DEBUG", "Bluetooth writtern"); 
+    			break;
+    		case MESSAGE_READ:
+    			//byte[] readBuf = (byte[])msg.obj;
+    			//String string = new String (readBuf);
+    	        String readMessage = (String) msg.obj;
+    	        stateMessage.setText(readMessage);
+    			
+    			
+    			break;
+    		}
+    	}
+
+
+    };
 	
 	
     @Override
@@ -93,11 +126,10 @@ public class MainActivity extends ListActivity {
             }
             else if (resultCode == RESULT_OK){
                 stateMessage.setText(R.string.bton_message);
+            	pairedDevices2 = new ArrayList<String>();
+                broadcastRecieverInit();
 
                 getDeviceList();
-
-                broadcastRecieverInit();
-                
                 startDiscovery();
                 
             }
@@ -116,7 +148,6 @@ public class MainActivity extends ListActivity {
     	pairedDevices2 = new ArrayList<String>();
 		devices = new ArrayList<BluetoothDevice>();
 		devices.clear();
-
 		// TODO Auto-generated method stub
     	mReceiver = new BroadcastReceiver(){ // Create a BroadcastReceiver for ACTION_FOUND
             public void onReceive(Context context, Intent intent){
@@ -128,6 +159,8 @@ public class MainActivity extends ListActivity {
                     // Add the name and address to an array adapter to show in a ListView
                     devices.add(device);
 					String s = "";
+					//mArrayAdapter.add(pairedDevices2.size()+"***");
+
 						//for(int i = 0;i<listAdapter.getCount();i++){
 							for (int a = 0;a<pairedDevices2.size();a++){
 								if(device.getName().equals(pairedDevices2.get(a))){
@@ -135,6 +168,7 @@ public class MainActivity extends ListActivity {
 									s = "(Paired)";
 									break;
 								}
+
 							}
 						//}
 						//ex:matt_hp (paired)
@@ -201,16 +235,41 @@ public class MainActivity extends ListActivity {
 	private void getDeviceList() {
 		// TODO Auto-generated method stub
 		Log.i("DEBUG", "Get Device List Method");
-
+		//int count =0;
     	Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+    	
         if (pairedDevices.size() > 0) {
+        	
             for (BluetoothDevice device : pairedDevices) {
                 // Add the name and address to an array adapter to show in a ListView
-                mArrayAdapter.add(device.getName() +" (Paired) "+ "\n" + device.getAddress());
+                //mArrayAdapter.add(device.getName() +" (Paired) "+ "\n" + device.getAddress());
+        		Log.i("DEBUG", "Before");
+        		pairedDevices2.add(device.getName());
+            	
+        		Log.i("DEBUG", "After");
+
             }
+            
         }
 	}
 
+    
+    /*
+    private void getDeviceList() {
+		// TODO Auto-generated method stub
+
+    	Set<BluetoothDevice> devicesArray = mBluetoothAdapter.getBondedDevices();
+		if (devicesArray.size()>0){
+			for(BluetoothDevice device:devicesArray){
+        		Log.i("DEBUG", "Before");
+
+				pairedDevices2.add(device.getName());
+        		Log.i("DEBUG", "After");
+
+			}	
+		}
+	}
+  */
 	@Override
     public void onDestroy() {
         super.onDestroy();
@@ -223,19 +282,72 @@ public class MainActivity extends ListActivity {
 	
 	//*********************************REFRESH BUTTON***********************************
 	public void refreshButtonClick(View view) {
-	    // Do something in response to button
+		
+	    // Have to implement intent for checking if bluetooth is on or off
 		mArrayAdapter.clear();
+		//pairedDevices2.clear();
+		//devices.clear();
 		//mArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-       // this.setListAdapter(mArrayAdapter);
+        //this.setListAdapter(mArrayAdapter);
+		broadcastRecieverInit();
 		getDeviceList();
-       // broadcastRecieverInit();
         startDiscovery();
 		Log.i("DEBUG", "Refresh Button Method");
 		//bluetoothInit();
 		
 	}
 	//*********************************Item Click***********************************
-	
+	/*
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		// TODO Auto-generated method stub
+		
+		super.onListItemClick(l, v, position, id);
+		
+		String cheese  = mArrayAdapter.getItem(position);
+		Log.i("CHECK", cheese.substring(0, 5));
+		if (cheese.substring(0, 5).equals("HC-05")){
+			try{
+			Class ourClass = Class.forName("com.biosense2.Monitor");
+			Intent ourIntent = new Intent(MainActivity.this, ourClass);
+			startActivity(ourIntent);
+			}
+			catch(ClassNotFoundException e){
+				e.printStackTrace();
+			}
+		}
+	}
+	*/
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		// TODO Auto-generated method stub
+		if(mBluetoothAdapter.isDiscovering()){
+			mBluetoothAdapter.cancelDiscovery();
+		}			
+		Toast.makeText(getApplicationContext(), mArrayAdapter.getItem(position),0).show();
+		try{
+			Toast.makeText(getApplicationContext(), devices.get(position).toString(),0).show();
+		}
+		catch(NullPointerException er){
+			er.printStackTrace();
+		}
+		if(mArrayAdapter.getItem(position).contains("Paired")){
+			BluetoothDevice selectedDevice = devices.get(position);
+			//Toast.makeText(getApplicationContext(), "device is paired",0).show();	
+			Log.i("DEBUG","connection started");
+
+			connect = new ConnectThread(selectedDevice);
+			connect.start();
+			
+			//edit
+			//ConnectedThread connected = new ConnectedThread(selectedDevice);
+			
+		}
+		else {
+			Toast.makeText(getApplicationContext(), "device is not paired",0).show();
+		}
+		
+	}
 	
 	//*********************************Managing Bluetooth Connection***********************************
 	
