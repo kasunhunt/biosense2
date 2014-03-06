@@ -1,13 +1,14 @@
 package com.biosense2;
 
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
-
 
 
 import android.app.ListActivity;
@@ -19,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -32,6 +34,7 @@ import android.widget.Toast;
 
 public class MainActivity extends ListActivity {
     private TextView stateMessage;
+    private TextView displayData;
     private ListView listView;
     //private Button refreshButton;
     private BroadcastReceiver mReceiver;
@@ -49,6 +52,9 @@ public class MainActivity extends ListActivity {
 	ArrayList<String> pairedDevices2;
 	ArrayList<BluetoothDevice> devices;
 	ConnectThread connect;
+	BluetoothSocket mmSocketTwo;
+	private ConnectedThread mConnectedThread;
+
     //!
 	
 	
@@ -62,17 +68,17 @@ public class MainActivity extends ListActivity {
     		switch(msg.what){
     		case SUCCESS_CONNECT:
     			//Do something
-    			ConnectedThread connectedThread = new ConnectedThread((BluetoothSocket)msg.obj);
+    			mConnectedThread = new ConnectedThread((BluetoothSocket)msg.obj);
     			Toast.makeText(getApplicationContext(), "CONNECTED", 0).show();
     			String s = "SND"; //request monitoring
-    			connectedThread.write(s.getBytes());
+    			mConnectedThread.write(s.getBytes());
     			Log.i("DEBUG", "Bluetooth writtern"); 
     			break;
     		case MESSAGE_READ:
     			//byte[] readBuf = (byte[])msg.obj;
     			//String string = new String (readBuf);
     	        String readMessage = (String) msg.obj;
-    	        stateMessage.setText(readMessage);
+    	        displayData.setText(readMessage);
     			
     			
     			break;
@@ -296,6 +302,37 @@ public class MainActivity extends ListActivity {
 		//bluetoothInit();
 		
 	}
+	
+	//*********************************REFRESH BUTTON***********************************
+		public void getButtonClick(View view) {
+			
+			Handler mHandler = new Handler(){
+				
+		    	@Override
+		    	public void handleMessage(Message msg) {
+
+		    		super.handleMessage(msg);
+		    		switch(msg.what){
+		    		case SUCCESS_CONNECT:
+		    			//Do something
+		    			ConnectedThread connectedThread = new ConnectedThread((BluetoothSocket)msg.obj);
+		    			Toast.makeText(getApplicationContext(), "CONNECTED", 0).show();
+		    			String s = "GET"; //request monitoring
+		    			connectedThread.write(s.getBytes());
+		    			Log.i("DEBUG", "connected"); 
+		    			break;
+		    		case MESSAGE_READ:
+		    			//byte[] readBuf = (byte[])msg.obj;
+		    			//String string = new String (readBuf);
+		    	        String readMessage = (String) msg.obj;
+		    	        
+		    			displayData.setText(readMessage);
+		    	        
+
+		    		}
+		    	}};
+			
+		}
 	//*********************************Item Click***********************************
 	/*
 	@Override
@@ -367,6 +404,10 @@ public class MainActivity extends ListActivity {
 	            tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
 	        } catch (IOException e) { }
 	        mmSocket = tmp;
+	        
+	      
+	        
+	        mmSocketTwo =tmp;  //HIGHLY EXPERIMENTAL 
 	    }
 	 
 	    public void run() {

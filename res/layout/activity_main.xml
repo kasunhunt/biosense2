@@ -18,8 +18,20 @@
         android:layout_weight="2"
         
         ></ListView>
-    
 
+    <TextView
+        android1:id="@+id/displayData"
+        android1:layout_width="match_parent"
+        android1:layout_height="wrap_content"
+        android1:layout_weight="1"
+        android1:text="TextView" />
+
+    <Button
+        android1:id="@+id/button1"
+        android1:layout_width="match_parent"
+        android1:layout_height="wrap_content"
+        android1:text="Get Data"
+        android:onClick="getButtonClick" />
 
     <Button
         android1:id="@+id/refresh_button"
