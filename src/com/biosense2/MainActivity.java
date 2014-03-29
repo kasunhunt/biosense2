@@ -1,8 +1,7 @@
 package com.biosense2;
 
 
-import java.io.File;
-import java.io.FileWriter;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,6 +10,8 @@ import java.util.Set;
 import java.util.UUID;
 
 
+import android.R.id;
+import android.annotation.SuppressLint;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -23,20 +24,25 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends ListActivity {
+	String textHold;
     private TextView stateMessage;
     private TextView displayData;
     private ListView listView;
-    //private Button refreshButton;
+    private Button refreshButton;
+    private Button getButton;
     private BroadcastReceiver mReceiver;
     private BluetoothAdapter mBluetoothAdapter;
     private ArrayAdapter<String> mArrayAdapter;
@@ -54,9 +60,11 @@ public class MainActivity extends ListActivity {
 	ConnectThread connect;
 	BluetoothSocket mmSocketTwo;
 	private ConnectedThread mConnectedThread;
+	private ConnectedThread mmConnectedThread;
 
     //!
 	
+
 	
 	
 	Handler mHandler = new Handler(){
@@ -74,30 +82,68 @@ public class MainActivity extends ListActivity {
     			mConnectedThread.write(s.getBytes());
     			Log.i("DEBUG", "Bluetooth writtern"); 
     			break;
+    		
     		case MESSAGE_READ:
     			//byte[] readBuf = (byte[])msg.obj;
     			//String string = new String (readBuf);
     	        String readMessage = (String) msg.obj;
-    	        displayData.setText(readMessage);
-    			
+    	        textHold = readMessage;
+    	        displayData.findViewById(R.id.display_data);
+    	        //displayData.setText("helllo");
+    			Log.i("DEBUG", "Bluetooth data displayed"); 
+    	        displayData.setText(textHold);
+    			Log.i("DEBUG", "Bluetooth read"); 
+
     			
     			break;
+    		
     		}
     	}
 
+		
+
 
     };
-	
-	
+
+    private void displayMessage(String text) {
+		// TODO Auto-generated method stub
+		
+	}
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        layoutInit();
 
         bluetoothInit();   
     }
 
-    private void bluetoothInit() {
+    private void layoutInit() {
+		// TODO Auto-generated method stub
+    	refreshButton = (Button)findViewById(R.id.refresh_button);
+	      refreshButton.setOnClickListener(new OnClickListener() {
+	  		
+	  		@Override
+	  		public void onClick(View v) {
+	  			// TODO Auto-generated method stub
+	  			refreshButtonClick(v);
+	  		}
+	      });
+	    
+	      getButton = (Button)findViewById(R.id.get_button);
+	      getButton.setOnClickListener(new OnClickListener() {
+	  		
+	  		@Override
+	  		public void onClick(View v) {
+	  			// TODO Auto-generated method stub
+	  			getButtonClick(v);
+	  		}
+	      });    
+	}
+
+	private void bluetoothInit() {
     	stateMessage = (TextView)findViewById(R.id.state_message);
         stateMessage.setText(R.string.idle_message);
 		
@@ -142,15 +188,7 @@ public class MainActivity extends ListActivity {
         }
     }
 
-	
-    private void startDiscovery() {
-		// TODO Auto-generated method stub
-		mBluetoothAdapter.cancelDiscovery();
-		mBluetoothAdapter.startDiscovery();
-	}
-    
-    
-    private void broadcastRecieverInit() {
+	private void broadcastRecieverInit() {
     	pairedDevices2 = new ArrayList<String>();
 		devices = new ArrayList<BluetoothDevice>();
 		devices.clear();
@@ -182,8 +220,10 @@ public class MainActivity extends ListActivity {
                 }
                 else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)){
 					//run some code
+                	
 				}
 				else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
+					//run some code
 
 				}
 				else if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)){
@@ -276,13 +316,28 @@ public class MainActivity extends ListActivity {
 		}
 	}
   */
+	
+	private void startDiscovery() {
+		// TODO Auto-generated method stub
+		mBluetoothAdapter.cancelDiscovery();
+		mBluetoothAdapter.startDiscovery();
+	}
+	
 	@Override
     public void onDestroy() {
         super.onDestroy();
 
         if(receiverRegisted){
             unregisterReceiver(mReceiver);
+            
+        
         }
+      
+        mBluetoothAdapter.disable();
+  	  	stateMessage.setText("Status: Disconnected");
+  	  
+        Toast.makeText(getApplicationContext(),"Bluetooth turned off",
+      		  Toast.LENGTH_LONG).show();
     }
     
 	
@@ -303,34 +358,11 @@ public class MainActivity extends ListActivity {
 		
 	}
 	
-	//*********************************REFRESH BUTTON***********************************
+	//*********************************GET BUTTON***********************************
 		public void getButtonClick(View view) {
+			Log.i("DEBUG", "Get Button Method");
+
 			
-			Handler mHandler = new Handler(){
-				
-		    	@Override
-		    	public void handleMessage(Message msg) {
-
-		    		super.handleMessage(msg);
-		    		switch(msg.what){
-		    		case SUCCESS_CONNECT:
-		    			//Do something
-		    			ConnectedThread connectedThread = new ConnectedThread((BluetoothSocket)msg.obj);
-		    			Toast.makeText(getApplicationContext(), "CONNECTED", 0).show();
-		    			String s = "GET"; //request monitoring
-		    			connectedThread.write(s.getBytes());
-		    			Log.i("DEBUG", "connected"); 
-		    			break;
-		    		case MESSAGE_READ:
-		    			//byte[] readBuf = (byte[])msg.obj;
-		    			//String string = new String (readBuf);
-		    	        String readMessage = (String) msg.obj;
-		    	        
-		    			displayData.setText(readMessage);
-		    	        
-
-		    		}
-		    	}};
 			
 		}
 	//*********************************Item Click***********************************
@@ -410,7 +442,9 @@ public class MainActivity extends ListActivity {
 	        mmSocketTwo =tmp;  //HIGHLY EXPERIMENTAL 
 	    }
 	 
-	    public void run() {
+	   
+
+		public void run() {
 	        // Cancel discovery because it will slow down the connection
 	        mBluetoothAdapter.cancelDiscovery();
 	 
@@ -430,7 +464,7 @@ public class MainActivity extends ListActivity {
 	       // manageConnectedSocket(mmSocket);
 	        //!
 	        mHandler.obtainMessage(SUCCESS_CONNECT,mmSocket).sendToTarget();
-	        //connected(mmSocket);//edit
+	        connected(mmSocket);//edit
 	        //!
 	    }
 	 
@@ -469,15 +503,23 @@ public class MainActivity extends ListActivity {
 	 
 	        // Keep listening to the InputStream until an exception occurs
 	        while (true) {
+	        	Log.i("DEBUG", "true");
 	            try {
 	                // Read from the InputStream
+	               // bytes = mmInStream.read(buffer);
+	                buffer  = new byte[1024];
 	                bytes = mmInStream.read(buffer);
+	                String readMessage = new String(buffer, 0, bytes);
+	                Log.i("DEBUG", "Bluetooth read");
 	                // Send the obtained bytes to the UI activity
-	                mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-	                        .sendToTarget();
+	                //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+	                mHandler.obtainMessage(MESSAGE_READ, bytes, -1, readMessage).sendToTarget();
 	            } catch (IOException e) {
 	                break;
 	            }
+		           SystemClock.sleep(300);
+ 	
+	            
 	        }
 	    }
 	 
@@ -498,4 +540,13 @@ public class MainActivity extends ListActivity {
 	
 	
 	//****************************Handler****************
+	public synchronized void connected(BluetoothSocket socket) {
+
+	    mmConnectedThread = new ConnectedThread(socket);
+	    mmConnectedThread.start();
+	    
+
+
+	}
+	
 }

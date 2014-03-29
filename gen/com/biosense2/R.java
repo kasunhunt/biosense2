@@ -25,8 +25,8 @@ public final class R {
     }
     public static final class id {
         public static final int action_settings=0x7f080004;
-        public static final int button1=0x7f080002;
-        public static final int displayData=0x7f080001;
+        public static final int display_data=0x7f080001;
+        public static final int get_button=0x7f080002;
         public static final int refresh_button=0x7f080003;
         public static final int state_message=0x7f080000;
     }
